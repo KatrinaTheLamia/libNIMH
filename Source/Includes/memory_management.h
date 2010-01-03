@@ -1,5 +1,5 @@
 /*nimh-doc
- * File : %(libNIMHsource-root)path/memory_management.h
+ * File : %(libNIMHsource-root)path/Includes/memory_management.h
  * Project : %(libNIMH)project
  * Authors : %(KatrinaTheLamia)author
  * Groups : %(NIMHLabs)group
@@ -7,8 +7,10 @@
  * Created on : 3176-1-02
  * Revisions :
  * 3176-1-02 + created this file
+ * 3176-1-03 ~ filled in most of the details on this file
  * TODO :
- * * Properly code and finish this.
+ * * Properly code and finish this. <more or less done>
+ * * Create an C implementaton file for this file <working on it>
  * * In data type files... set NIMH Libs word to default to 64bit... making 
  *   provisions for 32bit systems. In the case of a 16bit system, the word 
  *   will default to 8bit. I really see not much of a chance of using systems 
