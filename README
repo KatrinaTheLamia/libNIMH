@@ -1,0 +1,28 @@
+
+Lib NIMH
+
+Yeah--I have been finding that there have been more than a few common 
+functions in amongst most of my programs that I work on.
+
+Mostly this deals with program configuration, threading and sockets. this 
+means that this will project will work on the targets of:
+
+ * Command line configuration. Temporary configuration differences 
+   given per instance. These generally will not be permanent. Though 
+   this may be an option
+ * Configuration of the program. Generally the configuration would 
+   be stored via SQLite3 database, though there should be an option to add
+   new entries via a .conf or .ini file. To reset .Conf and .Ini entries
+   "touch"ing the file.. as the checksum for the conf/ini updates includes 
+   the last time updated timestamp.
+ * State keeping. Generally a form of auto save for the most part.
+ * Memory Management. Generally a large amount of my projects end up basing 
+   themselves on some rudimentary memory tools and setups. These will be 
+   expanded upon elsewhere, but are used here decently.
+ * Threading. Yeah, this is something that occurs quite often in my programs.
+   Generally in combination with various memory management type setups.
+ * Sockets... these generally appear in quite a few of my projects. It should
+   be more than normal in todays to use network code in programs.
+
+I may add some basic ncurses and frame buffer code into this after a while.
+
