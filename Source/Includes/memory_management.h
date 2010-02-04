@@ -8,6 +8,7 @@
  * Revisions :
  * 3176-1-02 + created this file
  * 3176-1-03 ~ filled in most of the details on this file
+ * 3176-1-35 ~ made some slight tweaks, based on implimentation details
  * TODO :
  * * Properly code and finish this. <more or less done>
  * * Create an C implementaton file for this file <working on it>
@@ -44,18 +45,20 @@ typedef struct {
     nimh_string *application_name;
     nimh_pids pids;
     nimh_stack stack;
+    nimh_signal_handler handler;
     nimh_sockets sockets;
     nimh_threads threads;
     nimh_configure configuration;
     nimh_storage storage;
-    nimh_datas data;
+    nimh_data data;
 } nimh_book_data nimh_book;
 
 typedef struct {
     nimh_string *data_entry;
     nimh_data *payload;
-    void *PREV;
-    void *NEXT;
+    nimh_time created, accessed, expires;
+    void *prev;
+    void *next;
 } nimh_datas_data nimh_data;
 
 /*nimh-doc
@@ -95,10 +98,10 @@ nimh_book* application(nimh_book*,nimh_string*,nimh_args*);
  * I hope that the functions "pop", "push", "shift" and "unshift" really have 
  * no requirements to be explained here.
  */
-nimh_word* pop(nimh_book*);
-nimh_word* shift(nimh_book*);
-nimh_book* push(nimh_book*,nimh_word*);
-nimh_book* unshift(nimh_book*,nimh_word*);
+nimh_word pop(nimh_book*);
+nimh_word shift(nimh_book*);
+nimh_book* push(nimh_book*,nimh_word);
+nimh_book* unshift(nimh_book*,nimh_word);
 
 /*nimh-doc
  * Function : _socket
@@ -142,15 +145,44 @@ nimh_data* _config(nimh_book*,nimh_string*);
  * Function : data
  * Param : nimh_book : NIMH application being dealt with.
  * Param : nimh_string : name of the data we want to talk to.
- * Param : nimh_data : nil : data to be put into the program.
+ * Param : nimh_data/void : optional/required : zero/undef : data to be put into the program.
  * Return : nimh_data : data being dealt with.
- * Return : nimh_book : NIMH application being dealt with/
  * Purpose :
  * Basic libNIMH heap. Makes it easier to track it within a libNIMH 
  * application if we do it like this.
  */
-nimh_data* data(nimh_book*,nimh_string*,nimh_data*=nil);
-nimh_book* data(nimh_book*,nimh_string*,nimh_data*=nil);
+nimh_data* data(nimh_book*,nimh_string*,nimh_data*=zero);
+nimh_data* data(nimh_book*,nimh_string*,void*);
 
+/*nimh-doc
+ * Function : data
+ * Param : nimh_data : Data that we are appending onto
+ * Param : nimh_string : name of data being appended
+ * Param : nimh_data : optional : zero : data to copy
+ * Purpose :
+ * Data copy constructor.
+ */
+
+void data(nimh_data*,nimh_string*,nimh_data*=zero);
+
+/*nimh-doc
+ * Function : expires
+ * Param : nimh_time : optional : nil : new expire time
+ * Param : boolean : optional : true : update expire time
+ * Return : nimh_time : the data's default expire time
+ * Purpose :
+ * This is for the garbage collector. Everytime we touch or access data, it's 
+ * last access time is updated. The garbage collector simply looks at its 
+ * last access time, vs. its expiry time.
+ *
+ * Though in the case that the second argument is given as false--this is 
+ * merely used to note that the time passed is an expiry time, but it is 
+ * updating the default expire time.
+ *
+ * Noting that libNIMH allows for a process to restore any expire times to 
+ * their defaults.
+ */
+
+nimh_time expires(nimh_time=nil,boolean=true);
 
 #endif /* __libNIMH_Memory_Managament_H__ */
