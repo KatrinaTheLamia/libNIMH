@@ -18,9 +18,14 @@
  * + 3176-3-15 Comments.. now... WITH FEELING
  * ~ 3176-3-15 Syntax error in loader... yeah.. fixed that
  * ~ 3176-3-15 fixed issue with pointer math in definition
+ * + 3176-3-15 oh, hey--that error monitor function... right...
+ * + 3176-3-15 shutdown sequence added
+ * ~ 3176-3-15 Right... forgot. C does not automatically fix typing issues.
+ * ~ 3176-3-15 seeking issues fixed
  *
  *== TODO
  * 3176-3-15 ? look into a definition file that is target library neutral
+ * 3176-3-15 ? translate error letters into meaningful messages
  */
 
 /*
@@ -53,7 +58,7 @@ void load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path,
 	/*
  	 * Grab our first module. The "HEAD" module is empty... this is to simplify code.
  	 */
-	nimh_modile *curr = my_book->modules->NEXT;
+	nimh_modile *curr = (nimh_module*) my_book->modules->NEXT;
 
 	/*
  	 * As much as we love conflict--computers will have issues by it. Making certain that neither
@@ -125,7 +130,7 @@ void load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path,
 	/*
  	 * Now then, let us create our new module
  	 */
-	nimh_module *new_module = malloc(size_of(nimh_module_data));
+	nimh_module *new_module = (nimh_mdoule *) malloc(size_of(nimh_module_data));
 
 	new_module->payload = dlopen(path->contents, my_mode);
         new_module->callable_name = friendly;
@@ -136,9 +141,9 @@ void load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path,
  	 * Grab the location to put it and put it there.
  	 */
 	while(curr->NEXT != nil) {
-		curr = curr->NEXT
+		curr = (nimh_module*) curr->NEXT
 	}
-	curr->NEXT = new_module;
+	curr->NEXT = (void*) new_module;
 }
 
 /*
@@ -149,13 +154,13 @@ void unload_nimh_mod(nimh_book *my_book, nimh_string *Friendly) {
  	 * grab out string token, as well as our first module
  	 */
 	nimh_string warn = nimh_cached_token("EN-Ca","Warning Log");
-	nimh_module *curr = my_book->modules->NEXT;
+	nimh_module *curr = (nimh_module*) my_book->modules->NEXT;
 
 	/*
  	 * Try to locate a module with this friendly name
  	 */
-	while(curr != nil && not nimh_string_equals(curr->friendly, Friendly)) {
-		curr = curr->NEXT;
+	while(curr->NEXT != nil && not nimh_string_equals(curr->friendly, Friendly)) {
+		curr = (nimh_module*) curr->NEXT;
 	}
 
 	/*
@@ -172,7 +177,7 @@ void unload_nimh_mod(nimh_book *my_book, nimh_string *Friendly) {
  	 */
 	dlclose(curr->payload);
 
-	curr->PREV->NEXT = curr->Next;
+	curr->PREV->NEXT = curr->NEXT;
 	curr->PREV = nil;
 	curr->NEXT = nil;
 
@@ -192,8 +197,8 @@ void reload_nimh_mod(nimh_book *my_book, nimh_string *friendly) {
 	 * Right--and we have a nimh_string that we request the stored
 	 * form of.
 	 */
-	nimh_module *curr = my_book->modules->NEXT;
-	nimh_module *meta_module = malloc(size_of(nimh_module_data));
+	nimh_module *curr = (nimh_module*) my_book->modules->NEXT;
+	nimh_module *meta_module = (nimh_module*) malloc(size_of(nimh_module_data));
 
 	nimh_string *info = nimh_cached_token("EN-Ca","Information Log");
 
@@ -211,8 +216,8 @@ void reload_nimh_mod(nimh_book *my_book, nimh_string *friendly) {
 	/*
  	 * Let us grab our module....
  	 */
-	while(curr != nil && not nimh_string_equals(curr->friendly, friendly)) {
-		curr = curr->NEXT;
+	while(curr->NEXT != nil && not nimh_string_equals(curr->friendly, friendly)) {
+		curr = (nimh_module*) curr->NEXT;
 	}
 
 	/*
@@ -247,13 +252,13 @@ void reload_nimh_mod(nimh_book *my_book, nimh_string *friendly) {
  */
 
 bool nimh_mod_loaded(nimh_book *my_book, nimh_string *module_path) {
-	nimh_module *curr = my_book->modules->NEXT;
+	nimh_module *curr = (nimh_module*) my_book->modules->NEXT;
 
 	while(curr != nil) {
 		if(nimh_string_equals(curr->library_path, module_path)) {
 			return true;
 		}
-		curr = curr->NEXT;
+		curr = (nimh_module*) curr->NEXT;
 	}
 	return false;
 }
@@ -265,14 +270,86 @@ bool nimh_mod_loaded(nimh_book *my_book, nimh_string *module_path) {
  * TODO: Look into making a system independant defintion file.
  */
 bool nimh_mod_name_exists(nimh_book *my_boo, nimh_string *friendly_name) {
-	nimh_module *curr = my_book->modules->NEXT;
+	nimh_module *curr = (nimh_module*) my_book->modules->NEXT;
 
 	while(curr != nil) {
 		if(nimh_string_equals(curr->friendly, friendly_name)) {
 			return true;
 		}
+		curr = (nimh_module*) curr->NEXT;
 	}
 	return false;
+}
+
+/*
+ *=== void loader_thread_errer(void*)
+ */
+void loader_thread_error(void *my_void_book) {
+	/*
+ 	 * right-- get our book into the right type
+ 	 */
+	nimh_book *my_book = (nimh_book*) my_void_book;
+
+	/*
+ 	 * our error character; 
+ 	 */
+	char *error;	
+
+	/*
+ 	 * just poll if there is an error.
+ 	 */
+	while(*my_book->open) {
+		if((error = dlerror()) != nil) {
+			nimh_error("C",sprintf("Dynamic_loader error: %s",error));
+		}
+		nimh_thread_rest(low_priority);
+	}
+}
+
+/*
+ *=== void mod_shutdown(nimh_book*)
+ */
+void mod_shutdown(nimh_book *my_book) {
+	nimh_module *curr = (nimh_module*) my_book->modules->NEXT;
+	nimh_string *shutdown_name;
+
+	/*
+ 	 * Zoom to the end
+ 	 */
+	while(curr->NEXT != nil) {
+		curr = (nimh_module*) curr->NEXT;
+	}
+
+	/*
+ 	 * delete modules in order. 
+ 	 */
+	while(curr->PREV->payload != nil) {
+		shutdown_name = curr->friendly;
+		curr = (nimh_modules*) curr->PREV;
+		unload_nimh_mod(shutdown_name);
+	}
+}
+
+/*
+ * === void init_nimh_modules(nimh_book*)
+ */
+void init_nimh_modules(nimh_book *my_book) {
+	/*
+ 	 * hey?! Are we already initialised?
+ 	 */
+	if(nil != my_book->modules || nil != my_book->modules->NEXT) {
+		nimh_error("EN-Ca","We already have a module set up");
+		return 0;
+	}
+
+	/*
+ 	 * If not, the head module should just be an empty thing. 
+   	 */
+	my_book->modules = (nimh_module *) malloc(size_of(nimh_module_data));
+
+	my_book->modules->PREV = nil;
+	my_book->modules->NEXT = nil;
+	my_book->modules->payload = nil;
 }
 
 #endif // USE_LINUX

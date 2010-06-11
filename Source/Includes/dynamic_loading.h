@@ -29,6 +29,10 @@
  * + 3176-3-14 Created this header file.
  * + 3176-3-15 Added required parts
  * + 3176-3-15 Commented this... though not with as much feeling as I'd hope
+ * ~ 3176-3-15 Right... we should uh... you know, follow our threading systems
+ *             Just saying..
+ * + 3176-3-15 added shutdown sequence
+ * + 3176-3-15 added initialiser
  *
  *== TODO
  * 3176-3-15 ? libNIMH tracker type? Something to contain the nimh_id
@@ -141,6 +145,22 @@ bool nimh_mod_name_exists(nimh_book*, nimh_string*);
  *
  * Just something to poll if what we are wrapping has noted any issues.
  */
-void loader_thread_error(nimh_book*);
+void loader_thread_error(void*);
+
+/*====== mod_shutdown
+ * Param: nimh_book: our book
+ * Returns: nothing... it is a shutdown operation
+ *
+ * unloads all modules currently loaded in the book
+ */
+void mod_shutdown(nimh_book*);
+
+/*====== init_nimh_modules
+ * Param: nimh_book: our book
+ * Returns: nothing
+ *
+ * Oh hey, starts up our whole mdoule system
+ */
+void init_nimh_modules(nimh_book*);
 
 #endif // __LIBNIMH_DYNAMIC_LOADER__
