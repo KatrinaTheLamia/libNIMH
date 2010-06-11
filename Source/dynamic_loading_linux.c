@@ -14,6 +14,13 @@
  *
  *== Revisions
  * + 3176-3-14 creation file initially
+ * + 3176-3-15 defined the last prototypes required
+ * + 3176-3-15 Comments.. now... WITH FEELING
+ * ~ 3176-3-15 Syntax error in loader... yeah.. fixed that
+ * ~ 3176-3-15 fixed issue with pointer math in definition
+ *
+ *== TODO
+ * 3176-3-15 ? look into a definition file that is target library neutral
  */
 
 /*
@@ -27,13 +34,34 @@
 
 #include <dlfcn.h>
 
-void *load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path, nimh_module_mode my_mode) {
+/*== Linux Defintions
+ * Various prototypes in header files getting defined here.
+ */
+
+/*nimh-doc
+ *=== void load_nimh_mod(nimh_book*, nimh_string *, nimh_string *, nimh_module_mode)
+ *
+ */
+void load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path, nimh_module_mode my_mode) {
+	/*
+ 	 * Grab the various string tokens we need, to make this program run a little less sluggish 
+ 	 */
 	nimh_string info = nimh_cached_token(my_book, "EN-CA", "Information Log");
 	nimh_string warn = nimh_cached_token(my_book, "EN-CA", "Warning Log");
 	nimh_string loader_error_thread = nimh_cache_token(my_book, "EN-Ca", "Module Loader Error Thread");
-	nimh_modile *curr, *head = my_book->modules;
-	curr = head;
 
+	/*
+ 	 * Grab our first module. The "HEAD" module is empty... this is to simplify code.
+ 	 */
+	nimh_modile *curr = my_book->modules->NEXT;
+
+	/*
+ 	 * As much as we love conflict--computers will have issues by it. Making certain that neither
+ 	 * the module path is loaded--nor is the friendly name used.
+ 	 *
+ 	 * Also note: it IS possible for modules to conflict with each other when loaded this way. Just
+ 	 * as if they were compiled as a nonNIMH application.
+ 	 */
 	if(nimh_mod_loaded(my_book, path)) {
 		nimh_error(my_book, "EN-Ca", "module aleady loading. Leaving");
 		return;
@@ -45,6 +73,21 @@ void *load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path
 	}
 
 
+	/*
+ 	 * Now--our module modes, are they in order.
+ 	 * This can be passed with no modes, and you will get a Lazy Load.
+ 	 *
+ 	 * Due to how libNIMH is suppose to function... it does not make sense to 
+ 	 * load them as LOCAL. If you want it to not conflict, you can load it 
+ 	 * into its own book.
+ 	 *
+ 	 * Though, this is not to say that libNIMH aware modules could not 
+ 	 * look into other books. This would require them knowing name of the 
+ 	 * module to talk with. Typically, you code should understand that its 
+ 	 * input may be complete garbage.
+ 	 *
+ 	 * Note to self: add forked_book into the libNIMH setup >.>'
+ 	 */ 
 	if(!(my_mode & RTLD_NOW || my_mode & RTLD_LAZY)) {
 		nimh_log(my_book, info, nimh_string(my_book, "EN-Ca", "No proper mode given for module load. Lazy load for lazy coder."));
 		my_mode |= RTLD_LAZY;
@@ -72,36 +115,61 @@ void *load_nimh_mod(nimh_book *my_book, nimh_string *friendly, nimh_string *path
 		return;
 	}
 
-
+	/*
+ 	 * Start the thread dedicated to seeing if the loader has screwed up
+ 	 */
 	if(!nimh_thread_running(loader_thread_error)) {
 		nimh_start_thread(nimh_book, loader_thread_error, nimh_dynaload_error, nil);
 	}
 
+	/*
+ 	 * Now then, let us create our new module
+ 	 */
 	nimh_module *new_module = malloc(size_of(nimh_module_data));
 
-	new_module->payload = dlopen(path, my_mode);
+	new_module->payload = dlopen(path->contents, my_mode);
         new_module->callable_name = friendly;
+	new_module->library_path = path;
+	new_module->my_mode = my_mode;
 
+	/*
+ 	 * Grab the location to put it and put it there.
+ 	 */
 	while(curr->NEXT != nil) {
-		curr = head->NEXT
+		curr = curr->NEXT
 	}
-
 	curr->NEXT = new_module;
-	return;
 }
 
+/*
+ * === void unload_nimh_mod(nimh_book*,nimh_string*);
+ */
 void unload_nimh_mod(nimh_book *my_book, nimh_string *Friendly) {
-	nimh_string warn = nimh_string("EN-Ca","Warning Log");
+	/*
+ 	 * grab out string token, as well as our first module
+ 	 */
+	nimh_string warn = nimh_cached_token("EN-Ca","Warning Log");
 	nimh_module *curr = my_book->modules->NEXT;
 
+	/*
+ 	 * Try to locate a module with this friendly name
+ 	 */
 	while(curr != nil && not nimh_string_equals(curr->friendly, Friendly)) {
 		curr = curr->NEXT;
 	}
 
+	/*
+ 	 * If we did not find the name, bugger out of here.
+ 	 */
 	if(curr == nil) {
 		nimh_log(my_book, warn, nimh_string("EN-Ca", "Friendly name does not match a module loaded. Did you typo?"));
+		return;
 	}
 
+	/*
+ 	 * other wish, close the file handle, link the linked list in the 
+ 	 * proper fashion, and delete the node.
+ 	 */
 	dlclose(curr->payload);
 
 	curr->PREV->NEXT = curr->Next;
@@ -109,8 +177,102 @@ void unload_nimh_mod(nimh_book *my_book, nimh_string *Friendly) {
 	curr->NEXT = nil;
 
 	free(curr);
-
+	curr = nil;
 }
 
+/*
+ *=== void reload_nimh_mod(nimh_book*,nimh_string*)
+ */
+void reload_nimh_mod(nimh_book *my_book, nimh_string *friendly) {
+
+	/*
+	 * Grab first module, an allocate a temporary module into memory.
+	 * The temp module is only to hold meta data.
+	 *
+	 * Right--and we have a nimh_string that we request the stored
+	 * form of.
+	 */
+	nimh_module *curr = my_book->modules->NEXT;
+	nimh_module *meta_module = malloc(size_of(nimh_module_data));
+
+	nimh_string *info = nimh_cached_token("EN-Ca","Information Log");
+
+	/*
+ 	 * Does this friendly name point to anything?
+ 	 *
+ 	 * If not, we really do not need to do much more than alert to the
+ 	 * user that the module has not been loaded.
+ 	 */
+	if(not nimh_mod_name_exists(my_book, friendly)) {
+		nimh_error(my_book, info, nimh_string(my_book,"EN-Ca","module does not appear to be loaded"));
+		return;
+	}
+
+	/*
+ 	 * Let us grab our module....
+ 	 */
+	while(curr != nil && not nimh_string_equals(curr->friendly, friendly)) {
+		curr = curr->NEXT;
+	}
+
+	/*
+ 	 * Grab its key information... 
+ 	 */
+	meta_module->friendly = friendly;
+	meta_module->path = curr->path;
+	meta_module->my_modes = curr->modes;
+
+	/*
+ 	 * Unload the module
+ 	 */
+	unload_nimh_mod(my_book,friendly);
+
+	/*
+ 	 * Load the new version
+ 	 */
+	load_nimh_mod(my_book,meta_module->friendly,meta_module->path,meta_module->my_modes);
+
+	/*
+ 	 * Guess what? This meta information is no longer needed!
+ 	 */
+	free(meta_module);
+	meta_module = nil;
+}
+
+/*
+ *=== bool nimh_mod_loaded(nimh_book, nimh_string)
+ *
+ * Hey! Does this file handle exist in our loader?
+ *
+ */
+
+bool nimh_mod_loaded(nimh_book *my_book, nimh_string *module_path) {
+	nimh_module *curr = my_book->modules->NEXT;
+
+	while(curr != nil) {
+		if(nimh_string_equals(curr->library_path, module_path)) {
+			return true;
+		}
+		curr = curr->NEXT;
+	}
+	return false;
+}
+
+/*
+ *=== bool nimh_mod_name_exists(nimh_book, nimh_string)
+ * Do we have this friendly name here?
+ *
+ * TODO: Look into making a system independant defintion file.
+ */
+bool nimh_mod_name_exists(nimh_book *my_boo, nimh_string *friendly_name) {
+	nimh_module *curr = my_book->modules->NEXT;
+
+	while(curr != nil) {
+		if(nimh_string_equals(curr->friendly, friendly_name)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 #endif // USE_LINUX

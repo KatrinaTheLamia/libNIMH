@@ -37,14 +37,16 @@ typedef unsigned char nimh_module_mode;
 
 typedef struct {
 	nimh_id internal;
-	nimh_string callable_name;
+	nimh_string callable_name. library_path;
 	nimh_library_payload payload;
+	nimh_module_mode my_mode;
 	void *NEXT;
 	void *PREV;
 } nimh_module_data nimh_module;
 
 void load_nimh_mod(nimh_book*,nimh_string*,nimh_string*, nimh_module_mode);
 void unload_nimh_mod(nimh_book*,nimh_string*);
+void reload_nimh_module(nimh_book*,nimh_string*);
 bool nimh_mod_loaded(nimh_book*, nimh_string*);
 bool nimh_mod_name_exists(nimh_book*, nimh_string*);
 void loader_thread_error(nimh_book*);
