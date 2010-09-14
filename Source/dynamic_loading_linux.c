@@ -22,10 +22,12 @@
  * + 3176-3-15 shutdown sequence added
  * ~ 3176-3-15 Right... forgot. C does not automatically fix typing issues.
  * ~ 3176-3-15 seeking issues fixed
+ * ! 3166-4-38 File broken by header file change see todo
  *
  *== TODO
  * 3176-3-15 ? look into a definition file that is target library neutral
  * 3176-3-15 ? translate error letters into meaningful messages
+ * 3176-4-38 ! Broken, add support for nimh widget to support head
  */
 
 /*
