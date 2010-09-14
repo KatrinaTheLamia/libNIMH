@@ -33,6 +33,7 @@
  *             Just saying..
  * + 3176-3-15 added shutdown sequence
  * + 3176-3-15 added initialiser
+ * ~ 3176-4-38 fitting it to use the libNIMH widgetting system
  *
  *== TODO
  * 3176-3-15 ? libNIMH tracker type? Something to contain the nimh_id
@@ -77,12 +78,10 @@ typedef unsigned char nimh_module_mode;
  * linked from the start.
  */
 typedef struct {
-	nimh_id internal;
+        nimh_widget __parent;
 	nimh_string callable_name. library_path;
 	nimh_library_payload payload;
 	nimh_module_mode my_mode;
-	void *NEXT;
-	void *PREV;
 } nimh_module_data nimh_module;
 
 /*===== Methods
