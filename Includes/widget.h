@@ -17,7 +17,7 @@
  *
  *== Revisions
  * + 3176-3-47 : file creation
- *
+ * + 3176-4-42 : Added a simple file lock mechanism
  *== Todo
  * ! Finish file
  * ! Document
@@ -43,13 +43,14 @@ Extern "C" {
 
 /*nimh-doc
  *=== nimh_widget
- * Field: id: unique widget id
- * Field: created: time variable was created
- * Field: modified: time variable was last modified
- * Field: read: time variable was last read
- * Field: access: access counts
- * Field: flags: flags used to be able to flip how this
+ * Field: id: unsigned long long: unique widget id
+ * Field: created: nimh_time: time variable was created
+ * Field: modified: nimh_time: time variable was last modified
+ * Field: read: nimh_tome: time variable was last read
+ * Field: access: unsigned long long: access counts
+ * Field: flags: unsigned long long: flags used to be able to flip how this
  *               widget is handled.
+ * Field: my_mutex: void pointer: for use with locking
  * Field: self: pointer to current "real" variable.
  * Field: prev: widgets are inherently a linked list. Easier that way.
  * Field: next: again, we are dealing with an inherently linked list
@@ -62,6 +63,7 @@ typedef struct {
 	nimh_time created, modified, read;
 	unsigned long long access;
 	unsigned long long flags;
+	void *my_mutex;
 	void *self;
 	void *prev;
 	void *next;
