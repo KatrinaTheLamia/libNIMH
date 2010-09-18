@@ -11,6 +11,7 @@
  *
  *== Revisions
  * + 3176-4-41 Created file
+ * + 3176-4-42 Moved Read and Write operations to function pointers
  *== TODO
  * ! Complete file
  * ! Documentation
@@ -24,12 +25,15 @@
 extern "C" {
 #endif /* guards for other languages */
 
+typedef (void)(file_handling_duty*)(void*,nimh_string*,nimh_string*);
+
 typedef struct {
     nimh_widget __parent;
     nimh_time flush_rate;
     nimh_netspeed throttle;
     nimh_string driver_string;
     void *driver_data;
+    file_handling_duty *read, *write, *open, *close, *flush, *my_lock, *my_unlock;
 } nimh_file_handle_data nimh_file_handle;
 
 /*=== Functions
@@ -46,17 +50,10 @@ typedef struct {
  */
 void create_storage(nimh_book*,nimh_string*,nimh_string*);
 
-void write(nimh_book*,nimh_string*,nimh_string*);
-void read(nimh_book*,nimh_string*,nimh_string*,nimh_string*);
-
 void lock(nimh_book*,nimh_string*);
 void unlock(nimh_book*,nimh_string*);
 
-void flush(nimh_book*,nimh_string*);
 void flush_all(nimh_book*);
-
-void open(nimh_book*,nimh_string*,void*);
-void close(nimh_book*,nimh_string*);
 
 void check_handle(nimh_book*,nimh_string*);
 
