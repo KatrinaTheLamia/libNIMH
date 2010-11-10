@@ -26,10 +26,10 @@ extern "C" {
 #endif
 /* C++ shields up and at full power, captain */
 
-#include <configuration.h>
 #include <nimh_string.h>
 #include <nimh_time.h>
 #include <widget.h>
+#include <configuration.h>
 #include <threading.h>
 #include <storage.h>
 #include <dynamic_loading.h>
