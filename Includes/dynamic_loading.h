@@ -1,8 +1,8 @@
 /*nimh-doc
- * File: %(libNIMH-Includes)path/dynamic_loader.h
- * Author: %(KatrinaTheLamia)user
- * Group: %(NIMHlabs)group, %(Radd Team)group
- * Creation Date: 3176-3-14
+ * = %(libNIMH-Includes)path/dynamic_loader.h
+ * @Author: %(KatrinaTheLamia)user
+ * @Group: %(NIMHlabs)group, %(Radd Team)group
+ * @Creation Date: 3176-3-14
  *
  * The Dynamic Loader is a part of the libNIMH framework that controls 
  * and keeps track of what has been loaded... and what has not. As 
@@ -25,7 +25,7 @@
  * And since libNIMH hopes to simplify the use of sockets and threads,
  * this may as well, also be added.
  *
- *== Revisions
+ * == Revisions
  * + 3176-3-14 Created this header file.
  * + 3176-3-15 Added required parts
  * + 3176-3-15 Commented this... though not with as much feeling as I'd hope
@@ -34,10 +34,15 @@
  * + 3176-3-15 added shutdown sequence
  * + 3176-3-15 added initialiser
  * ~ 3176-4-38 fitting it to use the libNIMH widgetting system
+ * + 3176-5-22 added system for quick identifying of loaded features.
+ * ~ 3176-5-22 Updated the comments
+ * + 3176-5-22 Added a more proper module checking system. Has a human name
+ * 		and a "machine" name.
  *
  *== TODO
  * 3176-3-15 ? libNIMH tracker type? Something to contain the nimh_id
  * PREV, NEXT and anything else our schevy little mind desires?
+ * 	&+ 3176-5-22 fixed a long time ago. Only noting it now
  */
 
 #ifdef __LIBNIMH_DYNAMIC_LOADER__
@@ -62,56 +67,58 @@ typedef unsigned char nimh_module_mode;
 
 /*=== Objects
  *==== nimh_module
- * Field: internal : nimh_id : just something I will be adding into objects in 
- *                   thid library. It is a place holder for future 
- *                   functionality
- * Field: callable_name : nimh_string : a human readable name to look for this 
- *                                      module
- * Field: library_path : nimh_string : the path of which this module can be 
- *                                     found.
- * Field: payload : nimh_library_payload : the library loaded itself. 
+ * @Field: __parent : nimh_widget : the nimh primative data type. Meant to 
+ * 		allow all the basic functionality.
+ * @Field: callable_name : nimh_string : a human readable name to look for this 
+ * 		module
+ * @Field: library_path : nimh_string : the path of which this module can be 
+ * 		found.
+ * @Field: driver_identification : nimh_string : a manner to tell if an 
+ * 		interface is loaded or not
+ * @Field: payload : nimh_library_payload : the library loaded itself. 
  *                                         Typically a file handle
- * Field: NEXT, PREV : nimh_module (void cast) : linked list items
- *
  * this is a framework to load and unload modules in and out of memory as
  * needed. So as to not require everything staticly linked, or dynamically 
  * linked from the start.
  */
 typedef struct {
         nimh_widget __parent;
-	nimh_string callable_name. library_path;
+	nimh_string callable_name, library_path, driver_identification;
 	nimh_library_payload payload;
 	nimh_module_mode my_mode;
 } nimh_module_data nimh_module;
 
 /*===== Methods
  *====== load_nimh_mod
- * Param: nimh_book: our book
- * Param: nimh_string: the name this module will be asked by
- * Param: nimh_module_mode: this module's modes
- * Return: nothing
+ * @Param: nimh_book: our book
+ * @Param: nimh_string: the name this module will be asked by
+ * @Param: nimh_module_mode: this module's modes
+ * @Return: nothing
  *
  * This loads the module. Will put something into the error 
  * spots of memory, should it not work.
+ *
+ * Note: driver id is in the modules "initialise" mode.
  */
 
 void load_nimh_mod(nimh_book*,nimh_string*,nimh_string*, nimh_module_mode);
 
 /*====== unload_nimh_mod
- * Param: nimh_book: our book
- * Param: nimh_string:a friendly human readable name.
- * Return: nothing
+ * @Param: nimh_book: our book
+ * @Param: nimh_string:a friendly human readable name.
+ * @Return: nothing
  * 
  * This unloads a module.
  *
  * Errors go into the error buffer
  */
+
 void unload_nimh_mod(nimh_book*,nimh_string*);
 
 /*====== reload_nimh_mod
- * Param: nimh_book: our book
- * Param: nimh_string: a friendly human readable identifier
- * Returns: nothing
+ * @Param: nimh_book: our book
+ * @Param: nimh_string: a friendly human readable identifier
+ * @Returns: nothing
  *
  * Reloads our module.
  *
@@ -121,45 +128,58 @@ void unload_nimh_mod(nimh_book*,nimh_string*);
 void reload_nimh_module(nimh_book*,nimh_string*);
 
 /*======= nimh_mod_loaded
- * Param: nimh_book: our book
- * Param: nimh_string: the module path
- * Returns: true if loaded. False if not loaded
+ * @Param: nimh_book: our book
+ * @Param: nimh_string: the module path
+ * @Returns: true if loaded. False if not loaded
  *
  * Just a quick check up.
  */
 bool nimh_mod_loaded(nimh_book*, nimh_string*);
 
 /*====== nimh_mod_name_exists
- * Param: nimh_book: our book
- * Param: nimh_string: a human readable name
- * Returns: true if name used. False if not
+ * @Param: nimh_book: our book
+ * @Param: nimh_string: a human readable name
+ * @Returns: true if name used. False if not
  *
  * A quick check to see if the name has been used.
  */
 bool nimh_mod_name_exists(nimh_book*, nimh_string*);
 
 /*====== loader_thread_error
- * Param: nimh_book: our book
- * Returns: nothing... like a good threading function should
+ * @Param: nimh_book: our book
+ * @Returns: nothing... like a good threading function should
  *
  * Just something to poll if what we are wrapping has noted any issues.
  */
 void loader_thread_error(void*);
 
 /*====== mod_shutdown
- * Param: nimh_book: our book
- * Returns: nothing... it is a shutdown operation
+ * @Param: nimh_book: our book
+ * @Returns: nothing... it is a shutdown operation
  *
  * unloads all modules currently loaded in the book
  */
 void mod_shutdown(nimh_book*);
 
 /*====== init_nimh_modules
- * Param: nimh_book: our book
- * Returns: nothing
+ * @Param: nimh_book: our book
+ * @Returns: nothing
  *
  * Oh hey, starts up our whole mdoule system
  */
 void init_nimh_modules(nimh_book*);
+
+/* ====== has_registered
+ * @Param: nimh_book: my book
+ * @Param: nimh_regex | nimh_string: Module signature to look at
+ * @Return: bool
+ *
+ * Check if we have a module loaded,
+ *
+ * Either by a literal string--or by a nimh regular expression.
+ *
+ */
+bool has_registered(nimh_book *, nimh_regex *);
+bool has_registered(nimh_book *, nimh_string *);
 
 #endif // __LIBNIMH_DYNAMIC_LOADER__
