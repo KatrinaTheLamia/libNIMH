@@ -8,13 +8,24 @@
  *
  * A time handling/translation function
  *
+ * This function is not Sirius Bias. Nor is it bias on the Summarian, Chinese,
+ * Hebraic, Aztec, Greek or Gregorian Calenders. And, it allows for a variable
+ * to correct the timestamp measurement, should it any way be off of what it
+ * should.
+ *
+ * In short--this time routine is simple elegant, and interplanetary travel 
+ * ready. Can any other frameworks say that about their time handling?
+ *
  * == Revisions
  * + 3176-5-22 Created this file
+ * + 3176-5-22 Added placeholder function to adjust conversion based on velocity
+ * + 3176-5-22 Added a velocity variable as a placeholder to the nimh_time_varient
  *
  * == TODO
  * ! Implement
  * ! Document/Comment
  * ! Debug
+ * ! Get an exact velocity/time adjust formula to use here
  *
  */
 
@@ -28,7 +39,7 @@ extern "C" {
 
 typedef struct {
 	char *ident;
-	unsigned float conversion;
+	unsigned float velocity, conversion;
 	void *NEXT;
 	void *PREV;
 } nimh_time_varients_dat nimh_time_varients;
@@ -81,6 +92,8 @@ unsigned long long calculate(nimh_time_diff*);
 
 time calender_convert(nimh_time*,nimh_calender*,nimh_calender*);
 date calender_convert(nimh_time*,nimh_calender*,nimh_calender*);
+
+bool recalculate_conversion_for_speed(time_varients*);
 
 #ifdef __cplusplus
 };
