@@ -9,26 +9,31 @@
  * 3176-1-02 + created this file
  * 3176-1-03 ~ filled in most of the details on this file
  * 3176-1-35 ~ made some slight tweaks, based on implimentation details
+ * 3176-5-17 ~ made it C compatible
+ * 3176-5-17 - removed needless header calls
+ * 3176-5-17 - removed socket section... sockets are now simply another 
+ *             storage driver
+ * 3176-5-17 + added holder for drivers.
  * TODO :
  * * Properly code and finish this. <more or less done>
- * * Create an C implementaton file for this file <working on it>
+ * * Create an C implementaton file for this file <done>
  * * In data type files... set NIMH Libs word to default to 64bit... making 
  *   provisions for 32bit systems. In the case of a 16bit system, the word 
  *   will default to 8bit. I really see not much of a chance of using systems 
  *   that have 7bit, 9bit, 6bit, 5bit or 4bit words any time soon though--
  *   so code will not be implement for that... however, options for it will
- *   be put in for future setups.
+ *   be put in for future setups. <low priority for now>
  * Purpose:
  * A general purpose memory management object for use in various NIMH Labs
  * projects, as well projects that makes use of the Libraries of NIMH.
  */
 
-#include <config.h>
-
-#include <types.h>
-
 #ifndef __libNIMH_Memory_Management_H__
 #define __libNIMH_Memory_Management_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*nimh-doc
  * Data Structure : nimh_book
@@ -46,10 +51,10 @@ typedef struct {
     nimh_pids pids;
     nimh_stack stack;
     nimh_signal_handler handler;
-    nimh_sockets sockets;
     nimh_threads threads;
     nimh_configure configuration;
     nimh_storage storage;
+    nimh_drivers driver;
     nimh_data data;
 } nimh_book_data nimh_book;
 
@@ -102,18 +107,6 @@ nimh_word pop(nimh_book*);
 nimh_word shift(nimh_book*);
 nimh_book* push(nimh_book*,nimh_word);
 nimh_book* unshift(nimh_book*,nimh_word);
-
-/*nimh-doc
- * Function : _socket
- * Param : nimh_book : NIMH application being dealt with.
- * Param : nimh_string : socket we desire to talk to.
- * Private : This function is for internal use in libNIMH
- * Return : nimh_socket : the socket requested
- * Purpose : grab a socket for the purpose of talking to it.
- * Notes : functions for creating and dealing with sockets are defined 
- * elsewhere.
- */
-nimh_socket* _socket(nimh_book*,nimh_string*);
 
 /*nimh-doc
  * Function : _thread
@@ -184,5 +177,9 @@ void data(nimh_data*,nimh_string*,nimh_data*=zero);
  */
 
 nimh_time expires(nimh_time=nil,boolean=true);
+
+#if __cplusplus
+}
+#endif
 
 #endif /* __libNIMH_Memory_Managament_H__ */
