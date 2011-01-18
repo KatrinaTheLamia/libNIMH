@@ -1,10 +1,10 @@
 /*nimh-doc
  * = %(libnimh-includes)path/libnimh.h
- * @Author : %(KatrinaTheLamia)user
- * @Groups : %(NIMHLabs)group, %(SpectrumLabs)group
- * @Projects: %(libNIMH)project
- * @Creation: 3176-5-22
- * @License : %(libnimh-documentation)path/LICENSE.txt
+ * %%Author : %(KatrinaTheLamia)user
+ * %%Groups : %(NIMHLabs)group, %(SpectrumLabs)group
+ * %%Projects: %(libNIMH)project
+ * %%Creation: 3176-5-22
+ * %%License : %(libnimh-documentation)path/LICENSE.txt
  *
  * Mostly just a standard header, to allow libNIMH to be used in various
  * other applications (provided they link to libNIMH.so or libNIMH.dll)
@@ -20,10 +20,17 @@
 #ifndef __libNIMH_H__
 #define __libNIMH_H__
 
-/* Start up our C++ shields  */
 #ifdef __cplusplus
-extern "C" {
+#define make_this_c(x) (extern "C" { x };)
+#else
+#define make_this_c(x) ( x )
 #endif
+
+
+/* Start up our C++ shields  */
+
+make_this_c(
+
 /* C++ shields up and at full power, captain */
 
 #include <nimh_string.h>
@@ -37,9 +44,8 @@ extern "C" {
 
 
 /* Drop our C++ shileds  */
-#ifdef __cplusplus
-};
-#endif
+
+);
 #endif /* __libNIMH_H__ is teh over */
 
 
